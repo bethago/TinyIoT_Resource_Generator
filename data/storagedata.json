@@ -1,0 +1,117 @@
+ [
+  {
+    "name": "CSE1",
+    "ty": 5,
+    "tasks": [
+      {
+        "name": "AE",
+        "ty": 2,
+        "id": "2e51e590-fef0-4afb-a5ae-cdca6f5bfb39",
+        "tasks": [
+          {
+            "name": "CNT",
+            "ty": 3,
+            "id": "6e65e65c-10f9-43ef-b913-d1d4e47b15cb",
+            "tasks": [
+              {
+                "name": "CNT",
+                "ty": 3,
+                "id": "8351c77f-501e-448c-b2ae-b3e947d2fc50",
+                "tasks": [],
+                "attrs": {
+                  "rn": "level",
+                  "ty": 3
+                },
+                "selected": false
+              },
+              {
+                "name": "CNT",
+                "ty": 3,
+                "id": "93e271fc-12d6-4e50-97f6-9c32a9d2ed0d",
+                "tasks": [],
+                "attrs": {
+                  "rn": "current",
+                  "ty": 3
+                },
+                "selected": false
+              },
+              {
+                "name": "CNT",
+                "ty": 3,
+                "id": "00547fec-1d21-41eb-b017-a9076be7899b",
+                "tasks": [],
+                "attrs": {
+                  "rn": "voltage",
+                  "ty": 3
+                },
+                "selected": false
+              }
+            ],
+            "attrs": {
+              "rn": "battery",
+              "ty": 3
+            },
+            "selected": false
+          },
+          {
+            "name": "CNT",
+            "ty": 3,
+            "id": "660712da-8488-49c5-8c3e-477ff82c7cee",
+            "tasks": [],
+            "attrs": {
+              "rn": "energyGeneration",
+              "ty": 3
+            },
+            "selected": false
+          },
+          {
+            "name": "CNT",
+            "ty": 3,
+            "id": "221e1999-11f1-4eef-8139-0ff836e47d67",
+            "tasks": [],
+            "attrs": {
+              "rn": "energyConsumption",
+              "ty": 3
+            },
+            "selected": false
+          }
+        ],
+        "attrs": {
+          "rn": "solar_controller",
+          "api": "Nsolar",
+          "srv": [
+            "2a",
+            "3"
+          ],
+          "ty": 2
+        },
+        "selected": false
+      },
+      {
+        "name": "AE",
+        "ty": 2,
+        "id": "87b45c5f-e260-41c8-ae99-87bc38e73028",
+        "tasks": [
+          {
+            "name": "CNT",
+            "ty": 3,
+            "id": "ea983b2a-b447-4dbd-b819-e47b0b945d41",
+            "tasks": [],
+            "attrs": {}
+          }
+        ],
+        "attrs": {}
+      }
+    ],
+    "attrs": {
+      "rn": "TinyIoT",
+      "csi": "tinyiot",
+      "csz": [
+        1
+      ],
+      "cst": 1,
+      "ty": 5
+    },
+    "selected": false
+  }
+]
