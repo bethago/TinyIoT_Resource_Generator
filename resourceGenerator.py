@@ -2,7 +2,7 @@ import os
 import json
 import requests
 
-SERVER_URL = 'http://127.0.0.1:3000/TinyIoT'
+SERVER_URL = 'http://127.0.0.1:3000/'
 
 class Headers:
     def __init__(self, content_type=None, origin='CAdmin', ri='request'):
@@ -21,11 +21,11 @@ class Headers:
 def request_post(url, headers, body):
     return requests.post(url, headers=headers, json=body).status_code == 201
 
-def check_and_create_ae(url, ae_attrs):
+def check_and_create_ae(url, parent_rn, ae_attrs):
     ae_rn = ae_attrs.get('rn')
     origin = f'C{ae_rn[:5]}' if ae_rn else 'CAdmin'
     headers = Headers(content_type='ae', origin=origin, ri='create_ae').headers
-    if requests.get(f'{url}/{ae_rn}', headers=headers).status_code == 200: return True, origin
+    if requests.get(f'{url}/{parent_rn}/{ae_rn}', headers=headers).status_code == 200: return True, origin
 
     ae_body = {
         "m2m:ae": {
@@ -36,36 +36,40 @@ def check_and_create_ae(url, ae_attrs):
             "srv": ae_attrs.get('srv', ["3"])
         }
     }
-    return request_post(url, headers, ae_body), origin
+    return request_post(f'{url}/{parent_rn}', headers, ae_body), origin
 
-def check_and_create_cnt(url, ae_rn, cnt_attrs, origin):
+def check_and_create_cnt(url, parent_rn, cnt_attrs, origin):
     cnt_rn = cnt_attrs.get('rn')
     headers = Headers(content_type='cnt', origin=origin, ri='create_cnt').headers
-    if requests.get(f'{url}/{ae_rn}/{cnt_rn}', headers=headers).status_code == 200: return True
-
+    if requests.get(f'{url}/{parent_rn}/{cnt_rn}', headers=headers).status_code == 200: return True
     cnt_body = {
         "m2m:cnt": {
             "rn": cnt_rn,
-            "lbl": cnt_attrs.get('lbl', []),
-            "mbs": cnt_attrs.get('mbs', 16384)
+            "lbl": cnt_attrs.get('lbl', [])
         }
     }
-    return request_post(f'{url}/{ae_rn}', headers, cnt_body)
+    return request_post(f'{url}/{parent_rn}', headers, cnt_body)
 
-def process_ae_and_cnt(tasks, url):
-    for task in tasks:
-        if task.get('ty') == 2:
-            ae_attrs = task['attrs']
-            ae_rn = ae_attrs.get('rn')
-            success, origin = check_and_create_ae(url, ae_attrs)
-            if success:
-                print(f"AE '{ae_rn}' is ready.")
-                for cnt_task in task.get('tasks', []):
-                    if cnt_task.get('ty') == 3:
-                        cnt_attrs = cnt_task['attrs']
-                        cnt_rn = cnt_attrs.get('rn')
-                        if check_and_create_cnt(url, ae_rn, cnt_attrs, origin):
-                            print(f"CNT '{cnt_rn}' is ready under AE '{ae_rn}'.")
+def process_tasks(parent_rn, tasks, origin):
+    stack = [(parent_rn, tasks, origin)]
+    while stack:
+        current_parent, current_tasks, current_origin = stack.pop()
+        for task in current_tasks:
+            if task.get('ty') == 2:
+                ae_attrs = task['attrs']
+                ae_rn = ae_attrs.get('rn')
+                success, ae_origin = check_and_create_ae(SERVER_URL, current_parent, ae_attrs)
+                if success:
+                    print(f"AE '{ae_rn}' is ready.")
+                    if 'tasks' in task:
+                        stack.append((f'{current_parent}/{ae_rn}', task['tasks'], ae_origin))
+            elif task.get('ty') == 3:
+                cnt_attrs = task['attrs']
+                cnt_rn = cnt_attrs.get('rn')
+                if check_and_create_cnt(SERVER_URL, current_parent, cnt_attrs, current_origin):
+                    print(f"CNT '{cnt_rn}' is ready under '{current_parent}'.")
+                    if 'tasks' in task:
+                        stack.append((f'{current_parent}/{cnt_rn}', task['tasks'], current_origin))
 
 # main process
 json_files = [f for f in os.listdir('./data/') if f.endswith('.json')]
@@ -95,6 +99,6 @@ except (FileNotFoundError, json.JSONDecodeError):
 # TBD
 cse_data = json_data[0]
 if cse_data.get('ty') == 5 and 'tasks' in cse_data:
-    process_ae_and_cnt(cse_data['tasks'], SERVER_URL)
+    process_tasks(cse_data['attrs']['rn'], cse_data['tasks'], 'CAdmin')
 else:
-    print("No valid AE found in the selected JSON file.")
+    print("No valid Entity found in the selected JSON file.")
