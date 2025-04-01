@@ -23,14 +23,14 @@ def request_post(url, headers, body):
 
 def check_and_create_ae(url, parent_rn, ae_attrs):
     ae_rn = ae_attrs.get('rn')
-    origin = f'C{ae_rn[:5]}' if ae_rn else 'CAdmin'
+    origin = f'C{ae_rn}' if ae_rn else 'CAdmin'
     headers = Headers(content_type='ae', origin=origin, ri='create_ae').headers
     if requests.get(f'{url}/{parent_rn}/{ae_rn}', headers=headers).status_code == 200: return True, origin
 
     ae_body = {
         "m2m:ae": {
             "rn": ae_rn,
-            "api": ae_attrs.get('api', f'N{ae_rn}'),
+            "api": ae_attrs.get('api', f'N{parent_rn}'),
             "rr": ae_attrs.get('rr', True),
             "lbl": ae_attrs.get('lbl', []),
             "srv": ae_attrs.get('srv', ["3"])
@@ -49,6 +49,24 @@ def check_and_create_cnt(url, parent_rn, cnt_attrs, origin):
         }
     }
     return request_post(f'{url}/{parent_rn}', headers, cnt_body)
+
+def check_and_create_grp(url, parent_rn, grp_attrs):
+    grp_rn = grp_attrs.get('rn')
+    origin = f'C{grp_rn}' if grp_rn else 'CAdmin'
+    mid = grp_attrs.get('mid')
+    headers = Headers(content_type='grp', origin=origin, ri='create_grp').headers
+    if requests.get(f'{url}/{parent_rn}/{grp_rn}', headers=headers).status_code == 200: return True
+
+    grp_body = {
+        "m2m:grp": {
+            "rn": grp_rn,
+            "mid": mid,
+            "mnm": len(mid),
+            "mt": 3,
+            "csy": 3
+        }
+    }
+    return request_post(f'{url}/{parent_rn}', headers, grp_body)
 
 def process_tasks(parent_rn, tasks, origin):
     stack = [(parent_rn, tasks, origin)]
@@ -70,6 +88,11 @@ def process_tasks(parent_rn, tasks, origin):
                     print(f"CNT '{cnt_rn}' is ready under '{current_parent}'.")
                     if 'tasks' in task:
                         stack.append((f'{current_parent}/{cnt_rn}', task['tasks'], current_origin))
+            elif task.get('ty') == 9:
+                grp_attrs = task['attrs']
+                grp_rn = grp_attrs.get('rn')
+                if check_and_create_grp(SERVER_URL, current_parent, grp_attrs):
+                    print(f"GRP '{grp_rn}' is ready under '{current_parent}'.")
 
 # main process
 json_files = [f for f in os.listdir('./data/') if f.endswith('.json')]
