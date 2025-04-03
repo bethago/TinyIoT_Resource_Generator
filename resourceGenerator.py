@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import requests
 
@@ -78,7 +79,7 @@ def process_tasks(parent_rn, tasks, origin):
                 ae_rn = ae_attrs.get('rn')
                 success, ae_origin = check_and_create_ae(SERVER_URL, current_parent, ae_attrs)
                 if success:
-                    print(f"AE '{ae_rn}' is ready.")
+                    print(f"AE '{ae_rn}' is ready under '{current_parent}'.")
                     if 'tasks' in task:
                         stack.append((f'{current_parent}/{ae_rn}', task['tasks'], ae_origin))
             elif task.get('ty') == 3:
@@ -95,31 +96,39 @@ def process_tasks(parent_rn, tasks, origin):
                     print(f"GRP '{grp_rn}' is ready under '{current_parent}'.")
 
 # main process
-json_files = [f for f in os.listdir('./data/') if f.endswith('.json')]
-if not json_files:
-    print("No JSON files found in the /data/ folder.")
-    quit()
-
-for idx, file_name in enumerate(json_files):
-    print(f"[{idx}] {file_name}")
-
-try:
-    choice = int(input("Enter the number of the file you want to read: "))
-    if choice not in range(len(json_files)):
-        print("Invalid number.")
+if len(sys.argv) > 1:
+    input_file = sys.argv[1]
+    if not input_file.endswith('.json'):
+        print("Only JSON files are supported.")
         quit()
-except ValueError:
-    print("Invalid input.")
-    quit()
+    if not os.path.exists(f'./data/{input_file}'):
+        print(f"File {input_file} not found in ./data/")
+        quit()
+else:
+    json_files = [f for f in os.listdir('./data/') if f.endswith('.json')]
+    if not json_files:
+        print("No JSON files found in the /data/ folder.")
+        quit()
+    for idx, file_name in enumerate(json_files):
+        print(f"[{idx}] {file_name}")
+
+    try:
+        choice = int(input("Enter the number of the file you want to read: "))
+        if choice not in range(len(json_files)):
+            print("Invalid number.")
+            quit()
+        input_file = json_files[choice]
+    except ValueError:
+        print("Invalid input.")
+        quit()
 
 try:
-    with open(f'./data/{json_files[choice]}', 'r', encoding='utf-8') as file:
+    with open(f'./data/{input_file}', 'r', encoding='utf-8') as file:
         json_data = json.load(file)
 except (FileNotFoundError, json.JSONDecodeError):
     print("Failed to load the file.")
     quit()
 
-# TBD
 cse_data = json_data[0]
 if cse_data.get('ty') == 5 and 'tasks' in cse_data:
     process_tasks(cse_data['attrs']['rn'], cse_data['tasks'], 'CAdmin')
