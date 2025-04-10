@@ -19,6 +19,13 @@ class Headers:
     def get_content_type(content_type):
         return {'acp': 1, 'ae': 2, 'cnt': 3, 'cin': 4, 'cb': 5, 'grp': 9, 'sub': 23}.get(content_type)
 
+getHeaders = {
+    'Accept': 'application/json',
+    'X-M2M-Origin': 'CAdmin',
+    'X-M2M-RVI': '3',
+    'X-M2M-RI': 'check_resource'
+}
+
 def request_post(url, headers, body):
     return requests.post(url, headers=headers, json=body).status_code == 201
 
@@ -26,7 +33,7 @@ def check_and_create_ae(url, parent_rn, ae_attrs):
     ae_rn = ae_attrs.get('rn')
     origin = f'C{ae_rn}' if ae_rn else 'CAdmin'
     headers = Headers(content_type='ae', origin=origin, ri='create_ae').headers
-    if requests.get(f'{url}/{parent_rn}/{ae_rn}', headers=headers).status_code == 200: return True, origin
+    if requests.get(f'{url}/{parent_rn}/{ae_rn}', headers=getHeaders).status_code == 200: return True, origin
 
     ae_body = {
         "m2m:ae": {
@@ -42,7 +49,7 @@ def check_and_create_ae(url, parent_rn, ae_attrs):
 def check_and_create_cnt(url, parent_rn, cnt_attrs, origin):
     cnt_rn = cnt_attrs.get('rn')
     headers = Headers(content_type='cnt', origin=origin, ri='create_cnt').headers
-    if requests.get(f'{url}/{parent_rn}/{cnt_rn}', headers=headers).status_code == 200: return True
+    if requests.get(f'{url}/{parent_rn}/{cnt_rn}', headers=getHeaders).status_code == 200: return True
     cnt_body = {
         "m2m:cnt": {
             "rn": cnt_rn,
@@ -56,8 +63,7 @@ def check_and_create_grp(url, parent_rn, grp_attrs):
     origin = f'C{grp_rn}' if grp_rn else 'CAdmin'
     mid = grp_attrs.get('mid')
     headers = Headers(content_type='grp', origin=origin, ri='create_grp').headers
-    if requests.get(f'{url}/{parent_rn}/{grp_rn}', headers=headers).status_code == 200: return True
-
+    if requests.get(f'{url}/{parent_rn}/{grp_rn}', headers=getHeaders).status_code == 200: return True
     grp_body = {
         "m2m:grp": {
             "rn": grp_rn,
@@ -82,6 +88,8 @@ def process_tasks(parent_rn, tasks, origin):
                     print(f"AE '{ae_rn}' is ready under '{current_parent}'.")
                     if 'tasks' in task:
                         stack.append((f'{current_parent}/{ae_rn}', task['tasks'], ae_origin))
+                else:
+                    print(f"AE '{ae_rn}' is NOT ready under '{current_parent}'.")
             elif task.get('ty') == 3:
                 cnt_attrs = task['attrs']
                 cnt_rn = cnt_attrs.get('rn')
@@ -89,11 +97,15 @@ def process_tasks(parent_rn, tasks, origin):
                     print(f"CNT '{cnt_rn}' is ready under '{current_parent}'.")
                     if 'tasks' in task:
                         stack.append((f'{current_parent}/{cnt_rn}', task['tasks'], current_origin))
+                else:
+                    print(f"CNT '{cnt_rn}' is NOT ready under '{current_parent}'.")
             elif task.get('ty') == 9:
                 grp_attrs = task['attrs']
                 grp_rn = grp_attrs.get('rn')
                 if check_and_create_grp(SERVER_URL, current_parent, grp_attrs):
                     print(f"GRP '{grp_rn}' is ready under '{current_parent}'.")
+                else:
+                    print(f"GRP '{grp_rn}' is NOT ready under '{current_parent}'.")
 
 # main process
 if len(sys.argv) > 1:
