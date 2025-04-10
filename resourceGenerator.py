@@ -3,7 +3,7 @@ import sys
 import json
 import requests
 
-SERVER_URL = 'http://127.0.0.1:3000/'
+SERVER_URL = 'http://127.0.0.1:3000'
 
 class Headers:
     def __init__(self, content_type=None, origin='CAdmin', ri='request'):
