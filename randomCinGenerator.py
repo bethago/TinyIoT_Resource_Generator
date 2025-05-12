@@ -24,7 +24,8 @@ def randomCin():
     for CNT in CNT_URI:
         body = {
             "m2m:cin": {
-                "con": f'{randint(100, 999)}'
+                "con": f'{randint(100, 999)}',
+                "lbl": [f'{CNT.rsplit("/", 1)[-1]}']
             }
         }
         status = requests.post(f'{SERVER_URL}/{CNT}', headers=headers, json=body)
